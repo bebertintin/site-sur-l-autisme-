@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Actualités — Autisme</title>
+    <meta name="description" content="Nouvelles, événements et annonces autour de l'autisme.">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <header class="site-header">
+      <div class="container header-grid">
+        <h1 class="logo">Actualités</h1>
+        <nav>
+            <a href="index.html">Accueil</a>
+            <a href="comprendre.html">Comprendre</a>
+            <a href="types.html">Spectre</a>
+            <a href="ressources.html">Ressources</a>
+            <a href="temoignages.html">Témoignages</a>
+            <a href="actualites.html" aria-current="page">Actualités</a>
+            <a href="histoire.html">Histoire</a>
+            <a href="recherche.html">Recherche</a>
+            <a href="faq.html">FAQ</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="container content">
+      <article>
+        <h2>2 avril - Journée mondiale de sensibilisation à l’autisme</h2>
+        <p>
+        Le 2 avril est reconnu comme la Journée mondiale de sensibilisation à l'autisme,
+        instaurée par l'ONU en 2007. Cette journée vise à promouvoir l'inclusion,
+        le respect et une meilleure compréhension du trouble du spectre de l'autisme.
+        </p>
+
+        <p>
+        De nombreux monuments à travers le monde sont illuminés en bleu
+        pour symboliser la solidarité et la sensibilisation.
+        </p>
+
+        <h2>Évolution du diagnostic précoce</h2>
+        <p>
+        Les avancées scientifiques permettent aujourd'hui un diagnostic
+        plus précoce, parfois dès l'âge de 18 à 24 mois.
+        </p>
+
+        <p>
+        Un repérage rapide permet une mise en place d'interventions adaptées,
+        favorisant le développement des compétences sociales et langagières.
+        </p>
+
+        <h2>Inclusion scolaire : progrès et défis</h2>
+        <p>
+        De plus en plus d'établissements scolaires mettent en place
+        des aménagements pédagogiques afin de favoriser l'inclusion :
+        </p>
+
+        <ul>
+            <li>Adaptation du rythme d'apprentissage</li>
+            <li>Supports visuels structurés</li>
+            <li>Accompagnement individualisé</li>
+            <li>Formation des enseignants</li>
+        </ul>
+
+        <p>
+        Cependant, des défis persistent en matière de formation,
+        de moyens humains et de sensibilisation.
+        </p>
+
+        <h2>Inclusion professionnelle</h2>
+        <p>
+        Certaines entreprises développent des programmes spécifiques
+        d'intégration des personnes autistes, valorisant leurs compétences
+        dans des domaines comme l'informatique, la recherche ou l'analyse.
+        </p>
+
+        <p>
+        Ces initiatives contribuent à changer le regard porté sur la neurodiversité.
+        </p>
+
+        <h2>Recherches scientifiques récentes</h2>
+        <p>
+        Les études actuelles portent notamment sur :
+        </p>
+
+        <ul>
+            <li>La génétique et les facteurs biologiques</li>
+            <li>La connectivité cérébrale</li>
+            <li>L'impact des interventions précoces</li>
+            <li>L'amélioration de la qualité de vie</li>
+        </ul>
+
+        <p>
+        L'objectif principal reste l'amélioration du bien-être
+        et de l'inclusion sociale des personnes autistes.
+        </p>
+
+        <h2>Actions de sensibilisation en Belgique</h2>
+        <p>
+        En Belgique, plusieurs associations organisent des conférences,
+        formations et événements afin de promouvoir une société
+        plus inclusive et mieux informée.
+        </p>
+
+        <p>
+        La sensibilisation reste un élément clé pour lutter contre
+        les idées reçues et favoriser le respect des différences.
+        </p>
+
+        <section id="proposed-news">
+          <h3>Propositions récentes</h3>
+          <div id="proposals" aria-live="polite">
+            <p class="muted">Aucune proposition récente.</p>
+          </div>
+
+          <p>
+            <a class="btn" href="admin.html">Proposer une actualité</a>
+            <a class="btn secondary" href="actualites-archive.html">Voir les archives</a>
+          </p>
+        </section>
+
+        <script>
+        (function(){
+          function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+          function mdToHtml(md){ if(!md) return ''; md = String(md).replace(/\r\n/g,'\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); md = md.replace(/\[(.*?)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>'); md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); md = md.replace(/__(.*?)__/g, '<strong>$1</strong>'); md = md.replace(/\*(.*?)\*/g, '<em>$1</em>'); md = md.replace(/_(.*?)_/g, '<em>$1</em>'); md = md.replace(/`([^`]*)`/g, '<code>$1</code>'); md = md.replace(/^###\s*(.*)$/gm, '<h3>$1</h3>'); md = md.replace(/^##\s*(.*)$/gm, '<h2>$1</h2>'); md = md.replace(/^#\s*(.*)$/gm, '<h1>$1</h1>'); md = md.replace(/(^|\n)([-\*]\s+.+)(\n|$)/g, function(_, before, listBlock){ var items = listBlock.trim().split(/\n/).map(function(line){ return line.replace(/^[-\*]\s+/, ''); }); return (before || '\n') + '<ul>' + items.map(function(i){ return '<li>'+i+'</li>'; }).join('') + '</ul>'; }); var parts = md.split(/\n\n+/); parts = parts.map(function(p){ if(/^<h[1-6]>/.test(p) || /^<ul>/.test(p)) return p; return '<p>'+p.replace(/\n/g,'<br>')+'</p>'; }); return parts.join('\n'); }
+
+          var container = document.getElementById('proposals');
+          var raw = localStorage.getItem('proposedNews');
+          container.innerHTML = '';
+          if(!raw){ container.innerHTML = '<p class="muted">Aucune proposition récente.</p>'; return; }
+          var list = JSON.parse(raw || '[]');
+          if(!list.length){ container.innerHTML = '<p class="muted">Aucune proposition récente.</p>'; return; }
+          list.slice().reverse().forEach(function(item){
+            var div = document.createElement('div');
+            div.className = 'news-item';
+            var meta = item.date ? '<div class="news-meta">'+escapeHtml(item.date)+'</div>' : '';
+            var body = item.markdown ? mdToHtml(item.content) : '<p>'+escapeHtml(item.content)+'</p>';
+            div.innerHTML = meta + '<h4>'+escapeHtml(item.title)+'</h4>' + body;
+            container.appendChild(div);
+          });
+        })();
+        </script>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© 2026 — Actualités • <a href="contact.html">Contact</a></p>
+      </div>
+    </footer>
+  </body>
+</html>

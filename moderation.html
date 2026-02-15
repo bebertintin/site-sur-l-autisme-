@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Modération — Actualités</title>
+    <meta name="description" content="Panneau de modération pour approuver / rejeter / publier des propositions d'actualités.">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <header class="site-header">
+      <div class="container header-grid">
+        <h1 class="logo">Modération</h1>
+        <nav>
+            <a href="index.html">Accueil</a>
+            <a href="comprendre.html">Comprendre</a>
+            <a href="types.html">Spectre</a>
+            <a href="ressources.html">Ressources</a>
+            <a href="temoignages.html">Témoignages</a>
+            <a href="actualites.html">Actualités</a>
+            <a href="histoire.html">Histoire</a>
+            <a href="recherche.html">Recherche</a>
+            <a href="faq.html">FAQ</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="container content">
+      <article>
+        <h2>Panneau de modération</h2>
+        <p class="muted">Gérez les propositions locales (démo). Vous pouvez approuver, rejeter, ou publier une proposition sur le serveur si l'API `/api/news` est disponible.</p>
+
+        <section class="admin-login">
+          <h3>Authentification (optionnel)</h3>
+          <label for="adminUser">Utilisateur</label>
+          <input id="adminUser" type="text" placeholder="admin">
+          <label for="adminPass">Mot de passe</label>
+          <input id="adminPass" type="password" placeholder="••••••">
+          <p>
+            <button class="btn" id="adminLoginBtn" type="button">Se connecter</button>
+            <button class="btn secondary" id="adminLogoutBtn" type="button">Se déconnecter</button>
+          </p>
+          <div id="adminStatus" class="muted"></div>
+        </section>
+
+        <div class="moderation-actions">
+          <button class="btn" id="approveAll">Approuver tout</button>
+          <button class="btn secondary" id="rejectAll">Rejeter tout</button>
+          <button class="btn" id="refreshBtn">Actualiser</button>
+        </div>
+
+        <section id="moderationList" aria-live="polite">
+          <p class="muted">Chargement...</p>
+        </section>
+
+        <h3>Articles publiés (serveur)</h3>
+        <div id="publishedList"><p class="muted">Chargement...</p></div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© 2026 — Modération • <a href="actualites.html">Actualités</a></p>
+      </div>
+    </footer>
+
+    <script>
+    (function(){
+      function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      function mdToHtml(md){ if(!md) return ''; md = String(md).replace(/\r\n/g,'\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); md = md.replace(/\[(.*?)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>'); md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); md = md.replace(/__(.*?)__/g, '<strong>$1</strong>'); md = md.replace(/\*(.*?)\*/g, '<em>$1</em>'); md = md.replace(/_(.*?)_/g, '<em>$1</em>'); md = md.replace(/`([^`]*)`/g, '<code>$1</code>'); md = md.replace(/^###\s*(.*)$/gm, '<h3>$1</h3>'); md = md.replace(/^##\s*(.*)$/gm, '<h2>$1</h2>'); md = md.replace(/^#\s*(.*)$/gm, '<h1>$1</h1>'); md = md.replace(/(^|\n)([-\*]\s+.+)(\n|$)/g, function(_, before, listBlock){ var items = listBlock.trim().split(/\n/).map(function(line){ return line.replace(/^[-\*]\s+/, ''); }); return (before || '\n') + '<ul>' + items.map(function(i){ return '<li>'+i+'</li>'; }).join('') + '</ul>'; }); var parts = md.split(/\n\n+/); parts = parts.map(function(p){ if(/^<h[1-6]>/.test(p) || /^<ul>/.test(p)) return p; return '<p>'+p.replace(/\n/g,'<br>')+'</p>'; }); return parts.join('\n'); }
+
+      var adminUserInput = document.getElementById('adminUser');
+      var adminPassInput = document.getElementById('adminPass');
+      var adminLoginBtn = document.getElementById('adminLoginBtn');
+      var adminLogoutBtn = document.getElementById('adminLogoutBtn');
+      var adminStatus = document.getElementById('adminStatus');
+
+      function getStoredAuth(){ return localStorage.getItem('adminAuth') || null; }
+      function setStoredAuth(val){ if(val) localStorage.setItem('adminAuth', val); else localStorage.removeItem('adminAuth'); }
+      function updateAdminStatus(){
+        var s = getStoredAuth();
+        if(!s){ adminStatus.textContent = 'Non connecté'; return; }
+        try{ var decoded = atob(s); var user = decoded.split(':')[0]; adminStatus.textContent = 'Connecté en tant que ' + user; }catch(e){ adminStatus.textContent = 'Connecté'; }
+      }
+
+      adminLoginBtn.addEventListener('click', function(){
+        var u = adminUserInput.value || ''; var p = adminPassInput.value || '';
+        if(!u || !p) return alert('Entrez utilisateur et mot de passe.');
+        setStoredAuth(btoa(u+':'+p)); updateAdminStatus(); adminUserInput.value = ''; adminPassInput.value = '';
+      });
+      adminLogoutBtn.addEventListener('click', function(){ setStoredAuth(null); updateAdminStatus(); });
+      updateAdminStatus();
+
+      function loadProposals(){
+        var raw = localStorage.getItem('proposedNews');
+        return raw ? JSON.parse(raw) : [];
+      }
+      function saveProposals(arr){ localStorage.setItem('proposedNews', JSON.stringify(arr)); }
+      function loadArchive(){ var raw = localStorage.getItem('archiveNews'); return raw ? JSON.parse(raw) : []; }
+      function saveArchive(arr){ localStorage.setItem('archiveNews', JSON.stringify(arr)); }
+
+      var listEl = document.getElementById('moderationList');
+      var publishedEl = document.getElementById('publishedList');
+
+      function render(){
+        var items = loadProposals();
+        listEl.innerHTML = '';
+        if(!items.length){ listEl.innerHTML = '<p class="muted">Aucune proposition locale.</p>'; } else {
+          items.slice().reverse().forEach(function(it, idx){
+            var div = document.createElement('div');
+            div.className = 'news-item';
+            var meta = it.date ? '<div class="news-meta">'+escapeHtml(it.date)+'</div>' : '';
+            var body = it.markdown ? mdToHtml(it.content) : '<p>'+escapeHtml(it.content)+'</p>';
+            div.innerHTML = meta + '<h4>'+escapeHtml(it.title)+'</h4>' + body +
+              '<p class="moderation-controls">'
+              + '<button class="btn" data-action="approve" data-index="'+idx+'">Approuver</button> '
+              + '<button class="btn secondary" data-action="reject" data-index="'+idx+'">Rejeter</button> '
+              + '<button class="btn" data-action="publish" data-index="'+idx+'">Publier (serveur)</button>'
+              + '</p>';
+            listEl.appendChild(div);
+          });
+        }
+      }
+
+      function refreshPublished(){
+        publishedEl.innerHTML = '<p class="muted">Chargement...</p>';
+        var auth = getStoredAuth();
+        var headers = {};
+        if(auth) headers['Authorization'] = 'Basic ' + auth;
+        var endpoint = auth ? '/api/admin/news' : '/api/news';
+        fetch(endpoint, headers && auth ? { headers: headers } : {}).then(function(r){ if(!r.ok) throw new Error('API non disponible'); return r.json(); }).then(function(data){
+          publishedEl.innerHTML = '';
+          if(!data.length) { publishedEl.innerHTML = '<p class="muted">Aucun article publié sur le serveur.</p>'; return; }
+          data.slice().reverse().forEach(function(it){
+            var d = document.createElement('div'); d.className = 'archive-item'; d.innerHTML = '<div class="news-meta">'+escapeHtml(it.date)+'</div><h4>'+escapeHtml(it.title)+'</h4><p>'+escapeHtml(it.content)+'</p>'; publishedEl.appendChild(d);
+          });
+        }).catch(function(){ publishedEl.innerHTML = '<p class="muted">Impossible de joindre le serveur.</p>'; });
+      }
+
+      listEl.addEventListener('click', function(e){
+        var btn = e.target.closest('button[data-action]'); if(!btn) return;
+        var action = btn.getAttribute('data-action');
+        var idx = Number(btn.getAttribute('data-index'));
+        var items = loadProposals();
+        var realIdx = items.length - 1 - idx;
+        var item = items[realIdx];
+        if(action === 'approve'){
+          var arch = loadArchive(); arch.push(item); saveArchive(arch);
+          items.splice(realIdx,1); saveProposals(items); render();
+        } else if(action === 'reject'){
+          if(confirm('Supprimer définitivement cette proposition ?')){ items.splice(realIdx,1); saveProposals(items); render(); }
+        } else if(action === 'publish'){
+          var auth = getStoredAuth();
+          var headers = { 'Content-Type':'application/json' };
+          if(auth) headers['Authorization'] = 'Basic ' + auth;
+          fetch('/api/news', { method:'POST', headers: headers, body: JSON.stringify(item) }).then(function(res){ if(!res.ok) throw new Error('Échec serveur: '+res.status); return res.json(); }).then(function(){
+            var arch = loadArchive(); arch.push(item); saveArchive(arch);
+            items.splice(realIdx,1); saveProposals(items); render(); refreshPublished();
+            alert('Article publié sur le serveur.');
+          }).catch(function(err){ alert('Publication échouée: ' + (err && err.message ? err.message : err)); });
+        }
+      });
+
+      document.getElementById('approveAll').addEventListener('click', function(){
+        var items = loadProposals(); if(!items.length) return alert('Aucune proposition.');
+        var arch = loadArchive().concat(items); saveArchive(arch); localStorage.removeItem('proposedNews'); render();
+      });
+      document.getElementById('rejectAll').addEventListener('click', function(){ if(confirm('Supprimer toutes les propositions locales ?')){ localStorage.removeItem('proposedNews'); render(); } });
+      document.getElementById('refreshBtn').addEventListener('click', function(){ render(); refreshPublished(); });
+
+      render(); refreshPublished();
+    })();
+    </script>
+  </body>
+</html>

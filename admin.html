@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administration — Soumettre une actualité</title>
+    <meta name="description" content="Formulaire statique pour proposer ou publier des actualités (localStorage pour démonstration).">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <header class="site-header">
+      <div class="container header-grid">
+        <h1 class="logo">Administration</h1>
+        <nav>
+            <a href="index.html">Accueil</a>
+            <a href="comprendre.html">Comprendre</a>
+            <a href="types.html">Spectre</a>
+            <a href="ressources.html">Ressources</a>
+            <a href="temoignages.html">Témoignages</a>
+            <a href="actualites.html">Actualités</a>
+            <a href="histoire.html">Histoire</a>
+            <a href="recherche.html">Recherche</a>
+            <a href="faq.html">FAQ</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="container content">
+      <article>
+        <h2>Proposer / publier une actualité (démo locale)</h2>
+        <p class="muted">Le formulaire ci‑dessous est statique : il enregistre les propositions dans <code>localStorage</code> pour la démonstration locale. Vous pouvez aussi fournir un <em>endpoint</em> (Formspree ou votre API) pour envoyer la proposition à un serveur réel.</p>
+
+        <section class="admin-login">
+          <h3>Connexion administrateur</h3>
+          <label for="adminUser">Utilisateur</label>
+          <input id="adminUser" type="text" placeholder="admin">
+          <label for="adminPass">Mot de passe</label>
+          <input id="adminPass" type="password" placeholder="••••••">
+          <p>
+            <button class="btn" id="adminLoginBtn" type="button">Se connecter</button>
+            <button class="btn secondary" id="adminLogoutBtn" type="button">Se déconnecter</button>
+          </p>
+          <div id="adminStatus" class="muted"></div>
+        </section>
+
+        <form id="newsForm" class="admin-form" novalidate>
+          <label for="endpoint">Endpoint (optionnel)</label>
+          <input id="endpoint" name="endpoint" type="url" placeholder="Ex: https://formspree.io/f/xxxxx ou http://localhost:3000/api/news">
+          <small class="muted">Laissez vide pour n'enregistrer que localement. Un exemple de serveur est fourni (server.js).</small>
+
+          <label for="title">Titre</label>
+          <input id="title" name="title" type="text" required>
+          <div id="titleError" class="error" aria-live="polite"></div>
+
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" value="2026-02-15" required>
+
+          <label for="content">Contenu</label>
+          <textarea id="content" name="content" rows="6" required></textarea>
+          <div id="contentError" class="error" aria-live="polite"></div>
+
+          <label for="notifyEmail">Adresse e‑mail (notification, optionnel)</label>
+          <input id="notifyEmail" name="notifyEmail" type="email" placeholder="votre@exemple.com">
+
+          <label><input id="toArchive" type="checkbox"> Publier directement dans les archives (local)</label>
+
+          <p>
+            <button class="btn" type="submit" id="submitBtn">Proposer</button>
+            <button class="btn" type="button" id="previewBtn">Aperçu</button>
+            <button class="btn secondary" type="button" id="clearBtn">Effacer propositions locales</button>
+          </p>
+        </form>
+
+        <h3>Aperçu</h3>
+        <div id="preview" class="preview-box" aria-live="polite">Aucun aperçu.</div>
+
+        <div id="status" aria-live="polite" class="muted"></div>
+
+        <script>
+        (function(){
+          var form = document.getElementById('newsForm');
+          var adminUserInput = document.getElementById('adminUser');
+          var adminPassInput = document.getElementById('adminPass');
+          var adminLoginBtn = document.getElementById('adminLoginBtn');
+          var adminLogoutBtn = document.getElementById('adminLogoutBtn');
+          var adminStatus = document.getElementById('adminStatus');
+
+          var title = document.getElementById('title');
+          var date = document.getElementById('date');
+          var content = document.getElementById('content');
+          var endpoint = document.getElementById('endpoint');
+          var notifyEmail = document.getElementById('notifyEmail');
+          var toArchive = document.getElementById('toArchive');
+          var submitBtn = document.getElementById('submitBtn');
+          var previewBtn = document.getElementById('previewBtn');
+          var preview = document.getElementById('preview');
+          var status = document.getElementById('status');
+          var titleError = document.getElementById('titleError');
+          var contentError = document.getElementById('contentError');
+
+          function getStoredAuth(){ return localStorage.getItem('adminAuth') || null; }
+          function setStoredAuth(val){ if(val) localStorage.setItem('adminAuth', val); else localStorage.removeItem('adminAuth'); }
+          function updateAdminStatus(){
+            var s = getStoredAuth();
+            if(!s){ adminStatus.textContent = 'Non connecté'; return; }
+            try{ var decoded = atob(s); var user = decoded.split(':')[0]; adminStatus.textContent = 'Connecté en tant que ' + user; }catch(e){ adminStatus.textContent = 'Connecté'; }
+          }
+
+          adminLoginBtn.addEventListener('click', function(){
+            var u = adminUserInput.value || ''; var p = adminPassInput.value || '';
+            if(!u || !p) return alert('Entrez utilisateur et mot de passe.');
+            setStoredAuth(btoa(u+':'+p)); updateAdminStatus(); adminUserInput.value = ''; adminPassInput.value = '';
+          });
+          adminLogoutBtn.addEventListener('click', function(){ setStoredAuth(null); updateAdminStatus(); });
+          updateAdminStatus();
+
+          function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+          function validate(){
+            var valid = true;
+            titleError.textContent = '';
+            contentError.textContent = '';
+            if(title.value.trim().length < 5){ titleError.textContent = 'Le titre doit contenir au moins 5 caractères.'; valid = false; }
+            if(content.value.trim().length < 20){ contentError.textContent = 'Le contenu doit contenir au moins 20 caractères.'; valid = false; }
+            submitBtn.disabled = !valid;
+            return valid;
+          }
+
+          function buildItem(){
+            return {
+              title: title.value.trim(),
+              date: date.value || new Date().toISOString().slice(0,10),
+              content: content.value.trim(),
+              notifyEmail: notifyEmail.value.trim() || undefined
+            };
+          }
+
+          function updatePreview(){
+            var it = buildItem();
+            if(!it.title && !it.content){ preview.innerHTML = '<p class="muted">Aucun aperçu.</p>'; return; }
+            preview.innerHTML = '<div class="news-meta">'+escapeHtml(it.date)+'</div><h4>'+escapeHtml(it.title)+'</h4><p>'+escapeHtml(it.content)+'</p>';
+          }
+
+          ['input','change'].forEach(function(evt){
+            title.addEventListener(evt, validate);
+            content.addEventListener(evt, validate);
+            title.addEventListener(evt, updatePreview);
+            content.addEventListener(evt, updatePreview);
+            date.addEventListener(evt, updatePreview);
+          });
+
+          previewBtn.addEventListener('click', function(){ updatePreview(); preview.scrollIntoView({behavior:'smooth'}); });
+
+          function saveToStorage(key, item){
+            var raw = localStorage.getItem(key);
+            var arr = raw ? JSON.parse(raw) : [];
+            arr.push(item);
+            localStorage.setItem(key, JSON.stringify(arr));
+          }
+
+          form.addEventListener('submit', async function(e){
+            e.preventDefault();
+            status.textContent = '';
+            if(!validate()){ status.textContent = 'Corrigez les erreurs avant de soumettre.'; return; }
+            var item = buildItem();
+            saveToStorage('proposedNews', item);
+            if(toArchive.checked) saveToStorage('archiveNews', item);
+            status.textContent = 'Proposition enregistrée localement.';
+
+            var ep = endpoint.value.trim();
+            if(ep){
+              status.textContent = 'Envoi au serveur…';
+              try{
+                var auth = getStoredAuth();
+                var headers = { 'Content-Type':'application/json' };
+                if(auth) headers['Authorization'] = 'Basic ' + auth;
+
+                var res = await fetch(ep, { method: 'POST', headers: headers, body: JSON.stringify(item) });
+                if(!res.ok){
+                  if(res.status === 401) throw new Error('Authentification échouée (identifiants invalides)');
+                  throw new Error('Erreur serveur: '+res.status);
+                }
+                status.textContent = 'Proposition envoyée au serveur.';
+              }catch(err){
+                status.textContent = 'Échec de l\'envoi distant — '+err.message+'.';
+              }
+            }
+
+            form.reset();
+            validate();
+            updatePreview();
+          });
+
+          document.getElementById('clearBtn').addEventListener('click', function(){
+            if(confirm('Effacer toutes les propositions locales (proposedNews + archiveNews) ?')){
+              localStorage.removeItem('proposedNews');
+              localStorage.removeItem('archiveNews');
+              status.textContent = 'Propositions locales effacées.';
+            }
+          });
+
+          // initial
+          validate();
+          updatePreview();
+        })();
+        </script>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© 2026 — Admin • <a href="actualites.html">Actualités</a></p>
+      </div>
+    </footer>
+  </body>
+</html>
